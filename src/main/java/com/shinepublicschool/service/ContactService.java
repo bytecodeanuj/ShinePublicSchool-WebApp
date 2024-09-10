@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,10 +29,10 @@ public class ContactService {
     public boolean saveMessageDetails(Contact contact) {
         boolean isSaved = false;
         contact.setStatus(ShinePublicSchoolConstants.OPEN);
-        contact.setCreatedBy(ShinePublicSchoolConstants.ANONYMOUS);
-        contact.setCreatedAt(LocalDateTime.now());
-        int result = contactRepository.saveContactDetails(contact);
-        if (result > 0) {
+//        contact.setCreatedBy(ShinePublicSchoolConstants.ANONYMOUS); //These are now maintained by Spring JPA AuditingAware
+//        contact.setCreatedAt(LocalDateTime.now());
+        Contact savedContact = contactRepository.save(contact); //spring data jpa
+        if (savedContact != null && savedContact.getContactId() > 0) {
             isSaved = true;
         }
         return isSaved;
@@ -40,13 +40,37 @@ public class ContactService {
 
 
     public List<Contact> findMsgsWithOpenStatus() {
-        return contactRepository.findMsgsWithStatus(ShinePublicSchoolConstants.OPEN);
+        return contactRepository.findByStatus(ShinePublicSchoolConstants.OPEN);
     }
 
-    public boolean updateMsgStatus(int id, String updatedBy) {
+    public List<Contact> findMsgsWithClosedStatus() {
+        return contactRepository.findByStatus(ShinePublicSchoolConstants.CLOSE);
+    }
+
+    public boolean updateMsgStatus(int contactId) {
         boolean isUpdated = false;
-        int result = contactRepository.updateMsgStatus(id, ShinePublicSchoolConstants.CLOSE, updatedBy);
-        if (result > 0) {
+        Optional<Contact> contact = contactRepository.findById(contactId);
+        contact.ifPresent(contact1 -> {
+            contact1.setStatus(ShinePublicSchoolConstants.CLOSE);
+//            contact1.setUpdatedBy(updatedBy);  //These are now maintained by Spring JPA AuditingAware
+//            contact1.setUpdatedAt(LocalDateTime.now());
+        });
+        Contact updatedContact = contactRepository.save(contact.get());
+        if (updatedContact != null && updatedContact.getUpdatedBy() != null) {
+            isUpdated = true;
+        }
+        return isUpdated;
+    }
+    public boolean updateMsgStatusToReopen(int contactId) {
+        boolean isUpdated = false;
+        Optional<Contact> contact = contactRepository.findById(contactId);
+        contact.ifPresent(contact1 -> {
+            contact1.setStatus(ShinePublicSchoolConstants.OPEN);
+//            contact1.setUpdatedBy(updatedBy);      //These are now maintained by Spring JPA AuditingAware
+//            contact1.setUpdatedAt(LocalDateTime.now());
+        });
+        Contact updatedContact = contactRepository.save(contact.get());
+        if (updatedContact != null && updatedContact.getUpdatedBy() != null) {
             isUpdated = true;
         }
         return isUpdated;

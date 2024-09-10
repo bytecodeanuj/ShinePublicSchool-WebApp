@@ -1,11 +1,16 @@
 package com.shinepublicschool.model;
 
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
+@Entity
+@Table(name = "holidays")
 public class Holiday extends BaseEntity{
-    private  String day="";
-    private  String reason="";
+    @Id
+    private  String day;
+    private  String reason;
+    @Enumerated(EnumType.STRING)
     private Type type;
 
     public enum Type{
